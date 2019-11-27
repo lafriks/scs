@@ -29,7 +29,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/alexedwards/scs/v2"
+	"github.com/alexedwards/scs/v3"
 	"github.com/alexedwards/scs/mysqlstore"
 
 	_ "github.com/go-sql-driver/mysql"

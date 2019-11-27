@@ -14,8 +14,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/alexedwards/scs/v2"
-	"github.com/alexedwards/scs/v2/memstore"
+	"github.com/alexedwards/scs/v3"
+	"github.com/alexedwards/scs/v3/memstore"
 )
 
 var sessionManager *scs.SessionManager

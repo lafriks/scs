@@ -27,7 +27,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/alexedwards/scs/v2"
+	"github.com/alexedwards/scs/v3"
 	"github.com/alexedwards/scs/SQLite3Store"
 
 	_ "github.com/mattn/go-sqlite3"

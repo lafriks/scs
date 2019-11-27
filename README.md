@@ -29,10 +29,10 @@
 
 ### Installation
 
-This package requires Go 1.11 or newer.
+This package requires Go 1.12 or newer.
 
 ```
-$ go get github.com/alexedwards/scs/v2@latest
+$ go get github.com/alexedwards/scs/v3@latest
 ```
 
 Note: If you're using the traditional `GOPATH` mechanism to manage dependencies, instead of modules, you'll need to `go get` and `import` `github.com/alexedwards/scs` without the `v2` suffix.
@@ -50,7 +50,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/alexedwards/scs/v2"
+	"github.com/alexedwards/scs/v3"
 )
 
 var sessionManager *scs.SessionManager

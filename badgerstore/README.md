@@ -13,7 +13,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/alexedwards/scs/v2"
+	"github.com/alexedwards/scs/v3"
 	"github.com/alexedwards/scs/badgerstore"
 	"github.com/dgraph-io/badger"
 )
