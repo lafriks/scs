@@ -22,12 +22,6 @@ type SessionManager struct {
 	// is not set and there is no inactivity timeout.
 	IdleTimeout time.Duration
 
-	// Lifetime controls the maximum length of time that a session is valid for
-	// before it expires. The lifetime is an 'absolute expiry' which is set when
-	// the session is first created and does not change. The default value is 24
-	// hours.
-	Lifetime time.Duration
-
 	// Store controls the session store where the session data is persisted.
 	Store Store
 
@@ -97,8 +91,7 @@ type SessionCookie struct {
 // concurrent use.
 func New() *SessionManager {
 	s := &SessionManager{
-		IdleTimeout: 0,
-		Lifetime:    24 * time.Hour,
+		IdleTimeout: 20 * time.Minute,
 		Store:       memstore.New(),
 		Codec:       gobCodec{},
 		ErrorFunc:   defaultErrorFunc,
@@ -144,6 +137,11 @@ func (s *SessionManager) LoadAndSave(next http.Handler) http.Handler {
 		next.ServeHTTP(bw, sr)
 
 		switch s.Status(ctx) {
+		case Unmodified:
+			if _, _, err := s.Commit(ctx); err != nil {
+				s.ErrorFunc(w, r, err)
+				return
+			}
 		case Modified:
 			token, expiry, err := s.Commit(ctx)
 			if err != nil {
@@ -181,9 +179,6 @@ func (s *SessionManager) WriteSessionCookie(w http.ResponseWriter, token string,
 	if expiry.IsZero() {
 		cookie.Expires = time.Unix(1, 0)
 		cookie.MaxAge = -1
-	} else if s.Cookie.Persist {
-		cookie.Expires = time.Unix(expiry.Unix()+1, 0)        // Round up to the nearest second.
-		cookie.MaxAge = int(time.Until(expiry).Seconds() + 1) // Round up to the nearest second.
 	}
 
 	w.Header().Add("Set-Cookie", cookie.String())

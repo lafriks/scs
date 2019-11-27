@@ -34,7 +34,7 @@ func main() {
 	// the session store.
 	sessionManager = scs.New()
 	sessionManager.Store = boltstore.NewWithCleanupInterval(db, 20*time.Second)
-	sessionManager.Lifetime = time.Minute
+	sessionManager.IdleTimeout = time.Minute
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/put", putHandler)

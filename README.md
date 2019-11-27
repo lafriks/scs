@@ -56,9 +56,9 @@ import (
 var sessionManager *scs.SessionManager
 
 func main() {
-	// Initialize a new session manager and configure the session lifetime.
+	// Initialize a new session manager and configure the session idle timeout.
 	sessionManager = scs.New()
-	sessionManager.Lifetime = 24 * time.Hour
+	sessionManager.IdleTimeout = 2 * time.Hour
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/put", putHandler)

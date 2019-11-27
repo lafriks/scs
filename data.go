@@ -35,9 +35,9 @@ type sessionData struct {
 	mu       sync.Mutex
 }
 
-func newSessionData(lifetime time.Duration) *sessionData {
+func newSessionData(idletimeout time.Duration) *sessionData {
 	return &sessionData{
-		deadline: time.Now().Add(lifetime).UTC(),
+		deadline: time.Now().Add(idletimeout).UTC(),
 		status:   Unmodified,
 		values:   make(map[string]interface{}),
 	}
@@ -55,14 +55,14 @@ func (s *SessionManager) Load(ctx context.Context, token string) (context.Contex
 	}
 
 	if token == "" {
-		return s.addSessionDataToContext(ctx, newSessionData(s.Lifetime)), nil
+		return s.addSessionDataToContext(ctx, newSessionData(s.IdleTimeout)), nil
 	}
 
 	b, found, err := s.Store.Find(token)
 	if err != nil {
 		return nil, err
 	} else if !found {
-		return s.addSessionDataToContext(ctx, newSessionData(s.Lifetime)), nil
+		return s.addSessionDataToContext(ctx, newSessionData(s.IdleTimeout)), nil
 	}
 
 	sd := &sessionData{
@@ -73,12 +73,12 @@ func (s *SessionManager) Load(ctx context.Context, token string) (context.Contex
 	if err != nil {
 		return nil, err
 	}
-	// Mark the session data as modified if an idle timeout is being used. This
-	// will force the session data to be re-committed to the session store with
-	// a new expiry time.
-	if s.IdleTimeout > 0 {
-		sd.status = Modified
-	}
+	// // Mark the session data as modified if more than half time of an idle timeout is passed.
+	// // This will force the session data to be re-committed to the session store with
+	// // a new expiry time.
+	// if time.Now().Add(s.IdleTimeout).After(sd.deadline) {
+	// 	sd.status = Modified
+	// }
 
 	return s.addSessionDataToContext(ctx, sd), nil
 }
@@ -89,7 +89,7 @@ func (s *SessionManager) Load(ctx context.Context, token string) (context.Contex
 // Most applications will use the LoadAndSave() middleware and will not need to
 // use this method.
 func (s *SessionManager) LoadNew(ctx context.Context) (context.Context, error) {
-	return s.addSessionDataToContext(ctx, newSessionData(s.Lifetime)), nil
+	return s.addSessionDataToContext(ctx, newSessionData(s.IdleTimeout)), nil
 }
 
 // Commit saves the session data to the session store and returns the session
@@ -118,8 +118,8 @@ func (s *SessionManager) Commit(ctx context.Context) (string, time.Time, error) 
 
 	expiry := sd.deadline
 	if s.IdleTimeout > 0 {
-		ie := time.Now().Add(s.IdleTimeout)
-		if ie.Before(expiry) {
+		ie := time.Now().Add(s.IdleTimeout).UTC()
+		if ie.After(expiry) {
 			expiry = ie
 		}
 	}
@@ -150,7 +150,7 @@ func (s *SessionManager) Destroy(ctx context.Context) error {
 
 	// Reset everything else to defaults.
 	sd.token = ""
-	sd.deadline = time.Now().Add(s.Lifetime).UTC()
+	sd.deadline = time.Now().Add(s.IdleTimeout).UTC()
 	for key := range sd.values {
 		delete(sd.values, key)
 	}
@@ -305,7 +305,7 @@ func (s *SessionManager) RenewToken(ctx context.Context) error {
 	}
 
 	sd.token = newToken
-	sd.deadline = time.Now().Add(s.Lifetime).UTC()
+	sd.deadline = time.Now().Add(s.IdleTimeout).UTC()
 	sd.status = Modified
 
 	return nil

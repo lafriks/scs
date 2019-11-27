@@ -84,44 +84,9 @@ func TestEnable(t *testing.T) {
 	}
 }
 
-func TestLifetime(t *testing.T) {
-	sessionManager := New()
-	sessionManager.Lifetime = 500 * time.Millisecond
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/put", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sessionManager.Put(r.Context(), "foo", "bar")
-	}))
-	mux.HandleFunc("/get", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		v := sessionManager.Get(r.Context(), "foo")
-		if v == nil {
-			http.Error(w, "foo does not exist in session", 500)
-			return
-		}
-		w.Write([]byte(v.(string)))
-	}))
-
-	ts := newTestServer(t, sessionManager.LoadAndSave(mux))
-	defer ts.Close()
-
-	ts.execute(t, "/put")
-
-	_, body := ts.execute(t, "/get")
-	if body != "bar" {
-		t.Errorf("want %q; got %q", "bar", body)
-	}
-	time.Sleep(time.Second)
-
-	_, body = ts.execute(t, "/get")
-	if body != "foo does not exist in session\n" {
-		t.Errorf("want %q; got %q", "foo does not exist in session\n", body)
-	}
-}
-
 func TestIdleTimeout(t *testing.T) {
 	sessionManager := New()
 	sessionManager.IdleTimeout = 200 * time.Millisecond
-	sessionManager.Lifetime = time.Second
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/put", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +115,7 @@ func TestIdleTimeout(t *testing.T) {
 		t.Errorf("want %q; got %q", "bar", body)
 	}
 
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(210 * time.Millisecond)
 	_, body = ts.execute(t, "/get")
 	if body != "foo does not exist in session\n" {
 		t.Errorf("want %q; got %q", "foo does not exist in session\n", body)
